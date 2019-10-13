@@ -2,33 +2,23 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 
-// When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
-// allocator.
-#[cfg(feature = "wee_alloc")]
+use pgp::composed::*;
+use pgp::crypto::*;
+use pgp::types::SecretKeyTrait;
+use pgp::types::*;
+use smallvec::smallvec;
+
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[wasm_bindgen]
 extern "C" {
-    fn alert(s: &str);
-
     #[wasm_bindgen(js_namespace = console)]
     fn log(s: &str);
 }
 
 #[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, rpgp-js!");
-}
-
-#[wasm_bindgen]
 pub fn create_x25519_key() -> Result<String, JsValue> {
-    use pgp::composed::*;
-    use pgp::crypto::*;
-    use pgp::types::SecretKeyTrait;
-    use pgp::types::*;
-    use smallvec::smallvec;
-
     let key_params = SecretKeyParamsBuilder::default()
         .key_type(KeyType::EdDSA)
         .can_create_certificates(true)
@@ -66,15 +56,15 @@ pub fn create_x25519_key() -> Result<String, JsValue> {
         .generate()
         .map_err(|err| format!("failed to generate secret key: {:?}", err))?;
 
-    let signed_key = key.sign(|| "".into()).expect("failed to sign key");
+    let signed_key = key.sign(|| "".into()).map_err(|_| "failed to sign key")?;
 
     let armor = signed_key
         .to_armored_string(None)
-        .expect("failed to serialize key");
+        .map_err(|_| "failed to serialize key")?;
 
     let (signed_key2, _headers) =
-        SignedSecretKey::from_string(&armor).expect("failed to parse key");
-    signed_key2.verify().expect("invalid key");
+        SignedSecretKey::from_string(&armor).map_err(|_| "failed to parse key")?;
+    signed_key2.verify().map_err(|_| "invalid key")?;
 
     assert_eq!(signed_key, signed_key2);
 
@@ -82,17 +72,19 @@ pub fn create_x25519_key() -> Result<String, JsValue> {
 
     let public_signed_key = public_key
         .sign(&signed_key, || "".into())
-        .expect("failed to sign public key");
+        .map_err(|_| "failed to sign public key")?;
 
-    public_signed_key.verify().expect("invalid public key");
+    public_signed_key
+        .verify()
+        .map_err(|_| "invalid public key")?;
 
     let armor = public_signed_key
         .to_armored_string(None)
-        .expect("failed to serialize public key");
+        .map_err(|_| "failed to serialize public key")?;
 
     let (signed_key2, _headers) =
-        SignedPublicKey::from_string(&armor).expect("failed to parse public key");
-    signed_key2.verify().expect("invalid public key");
+        SignedPublicKey::from_string(&armor).map_err(|_| "failed to parse public key")?;
+    signed_key2.verify().map_err(|_| "invalid public key")?;
 
     log(&armor);
 
@@ -101,12 +93,6 @@ pub fn create_x25519_key() -> Result<String, JsValue> {
 
 #[wasm_bindgen]
 pub fn create_rsa_key() -> Result<String, JsValue> {
-    use pgp::composed::*;
-    use pgp::crypto::*;
-    use pgp::types::SecretKeyTrait;
-    use pgp::types::*;
-    use smallvec::smallvec;
-
     let mut key_params = SecretKeyParamsBuilder::default();
     key_params
         .key_type(KeyType::Rsa(2048))
@@ -146,15 +132,15 @@ pub fn create_rsa_key() -> Result<String, JsValue> {
         .generate()
         .map_err(|err| format!("failed to generate secret key: {:?}", err))?;
 
-    let signed_key = key.sign(|| "".into()).expect("failed to sign key");
+    let signed_key = key.sign(|| "".into()).map_err(|_| "failed to sign key")?;
 
     let armor = signed_key
         .to_armored_string(None)
-        .expect("failed to serialize key");
+        .map_err(|_| "failed to serialize key")?;
 
     let (signed_key2, _headers) =
-        SignedSecretKey::from_string(&armor).expect("failed to parse key");
-    signed_key2.verify().expect("invalid key");
+        SignedSecretKey::from_string(&armor).map_err(|_| "failed to parse key")?;
+    signed_key2.verify().map_err(|_| "invalid key")?;
 
     assert_eq!(signed_key, signed_key2);
 
@@ -162,17 +148,19 @@ pub fn create_rsa_key() -> Result<String, JsValue> {
 
     let public_signed_key = public_key
         .sign(&signed_key, || "".into())
-        .expect("failed to sign public key");
+        .map_err(|_| "failed to sign public key")?;
 
-    public_signed_key.verify().expect("invalid public key");
+    public_signed_key
+        .verify()
+        .map_err(|_| "invalid public key")?;
 
     let armor = public_signed_key
         .to_armored_string(None)
-        .expect("failed to serialize public key");
+        .map_err(|_| "failed to serialize public key")?;
 
     let (signed_key2, _headers) =
-        SignedPublicKey::from_string(&armor).expect("failed to parse public key");
-    signed_key2.verify().expect("invalid public key");
+        SignedPublicKey::from_string(&armor).map_err(|_| "failed to parse public key")?;
+    signed_key2.verify().map_err(|_| "invalid public key")?;
 
     log(&armor);
 
