@@ -8,12 +8,13 @@ use wasm_bindgen_test::*;
 wasm_bindgen_test_configure!(run_in_browser);
 
 #[wasm_bindgen_test]
-fn pass() {
-    assert_eq!(1 + 1, 2);
+fn test_create_rsa_key() {
+    let key = rpgp_js::create_rsa_key().unwrap();
+    assert!(!key.is_empty());
 }
 
 #[wasm_bindgen_test]
-fn test_create_key() {
-    let key = rpgp_js::create_key().unwrap();
+fn test_create_x25519_key() {
+    let key = rpgp_js::create_x25519_key().unwrap();
     assert!(!key.is_empty());
 }
